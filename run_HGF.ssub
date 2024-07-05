@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+#SBATCH --partition=c2_gpu
+#SBATCH --ntasks=1
+#SBATCH --mem=12000
+#SBATCH --nodes=1
+#SBATCH --workdir=/media/labs/rsmith/lab-members/cgoldman/Wellbeing/emotional_faces/scripts/
+#SBATCH --begin=now
+#SBATCH --job-name=HGF-fit
+#
+#################################################
+
+SUBJECT=$1
+export SUBJECT
+
+RUN=$2
+export RUN
+
+RESULTS=$3
+export RESULTS
+
+MODEL=$4
+export MODEL
+
+PREDICTION=$5
+export PREDICTION
+
+COUNTERBALANCE=$6
+export COUNTERBALANCE
+
+EXPERIMENT=$7
+export EXPERIMENT
+
+
+
+module load matlab/2022a
+#run_file='/media/labs/rsmith/lab-members/rhodson/emotional_faces/HGF_wrapper.m'
+run_file='/media/labs/rsmith/lab-members/cgoldman/Wellbeing/emotional_faces/scripts/HGF_wrapper.m'
+matlab -nodisplay -nosplash < ${run_file}

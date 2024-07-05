@@ -1,0 +1,56 @@
+---
+title: "emotional_faces_figures"
+output: html_document
+date: "2024-07-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)  # Keep script tidy
+library(glue)       # String formatting throughout
+library(dplyr)
+library(ggplot2)
+library(car)
+library(psych)
+library(BayesFactor)
+library(magrittr)
+library(tidyr)
+library(lme4)
+library(broom)
+library(sjPlot)
+library(jtools)
+library(pastecs)
+library(GPArotation)
+library(e1071)
+library(tidyr)
+library(outliers)
+
+source('L:/rsmith/lab-members/clavalley/R/legacy/corrplotplus.R')
+
+df <- read.csv('L:/rsmith/wellbeing/data/prolific/SWB_prolific_data.csv')
+grep("^EF", colnames(df), value = TRUE)
+
+```
+```{r}
+
+# Create a bar plot comparing two columns using ggplot2
+ggplot(data, aes(x = Category)) +
+  geom_bar(aes(y = Value1, fill = "Value1"), position = "dodge", stat = "identity") +
+  geom_bar(aes(y = Value2, fill = "Value2"), position = "dodge", stat = "identity") +
+  labs(title = "Bar Plot Comparison",
+       x = "Categories", y = "Values",
+       fill = "Data") +
+  scale_fill_manual(values = c("Value1" = "skyblue", "Value2" = "salmon")) +
+  theme_minimal()
+
+```
+
+- `aes(x = Category)`: Specifies the x-axis variable (categories).
+- `geom_bar()`: Creates bars for each value (`Value1` and `Value2`). `position = "dodge"` places the bars side by side.
+- `labs()`: Sets the titles for the plot axes, legend, and the plot itself.
+- `scale_fill_manual()`: Customizes the colors for `Value1` and `Value2`.
+- `theme_minimal()`: Applies a minimalistic theme to the plot (optional).
+
+
+
