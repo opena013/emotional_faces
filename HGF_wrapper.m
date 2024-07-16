@@ -1,14 +1,14 @@
 %% HGF Wrapper Function, 2023
-% Hi my name is orestes
+
 clear all 
 dbstop if error
 if ispc
     root = 'L:/';    
     run = '1';   % MTurk Session 1,2,3
-    res_dir = 'L:/rsmith/lab-members/cgoldman/Wellbeing/emotional_faces/model_output_prolific';
+    res_dir = 'L:/rsmith/lab-members/osanchez/emotional_faces/Output_prolific';
     rt_model = false;
     p_or_r = 'p'; %prediction or responses (for binary hgf) - p=prediction, r=responses
-    cb = '2'; %counterbalance order
+    %cb = '2'; %counterbalance order
     show_plot = true;
     % for experiment mode, specify if mturk, stimtool, or inperson
     experiment_mode = "prolific";
@@ -17,7 +17,7 @@ if ispc
     elseif experiment_mode == "mturk"
         subject = 'AM0JKZVOEOTMA';   % Mturk Subject ID (others AM0JKZVOEOTMA, A1IZ4NX41GKU4X, A1Q7VWUBIJOK17)
     elseif experiment_mode == "prolific"
-        subject = '63dac3039dddeaa909a790fb';
+        subject = '60cee4ec871f36088fe20ff3';
     end
 
 elseif isunix 
@@ -27,7 +27,7 @@ elseif isunix
     res_dir = getenv('RESULTS');
     rt_model = strcmp(getenv('MODEL'), 'true');
     p_or_r = getenv('PREDICTION'); 
-    cb = getenv('COUNTERBALANCE');
+    %cb = getenv('COUNTERBALANCE');
     experiment_mode = getenv('EXPERIMENT');
     show_plot = false;
 end
@@ -171,16 +171,51 @@ for k=1:length(index_array)
             sub_table.p_trials = size(predict_table,1);
             sub_table.r_trials = size(resp_table,1);
             sub_table.cor_trials =  sum(strcmp(resp_table.result, 'correct'));
+            
+            % Add schedule
+            schedule = readtable('L:/rsmith/lab-members/cgoldman/Wellbeing/emotional_faces/schedules/emotional_faces_CB1_schedule_claire.csv');
+            schedule_cb = readtable('L:/rsmith/lab-members/cgoldman/Wellbeing/emotional_faces/schedules/emotional_faces_CB2_schedule_claire.csv');
+            if cb == "1" 
+                resp_table.intensity = schedule.intensity;
+                resp_table.expectation = schedule.expectation;
+                resp_table.prob_hightone_sad = schedule.prob_hightone_sad;
+            else
+                resp_table.intensity = schedule_cb.intensity;
+                resp_table.expectation = schedule_cb.expectation;
+                resp_table.prob_hightone_sad = schedule_cb.prob_hightone_sad;
+            end
 
             sub_table.r_incor_sad_high =  sum(strcmp(resp_table(strcmp(resp_table.result, 'incorrect'),:).trial_type, 'sad_high'));
             sub_table.r_incor_sad_low =  sum(strcmp(resp_table(strcmp(resp_table.result, 'incorrect'),:).trial_type, 'sad_low'));
             sub_table.r_incor_angry_high =  sum(strcmp(resp_table(strcmp(resp_table.result, 'incorrect'),:).trial_type, 'angry_high'));
             sub_table.r_incor_angry_low =  sum(strcmp(resp_table(strcmp(resp_table.result, 'incorrect'),:).trial_type, 'angry_low'));
 
+            % accuracy x intensity
+            low_per = sum(strcmp(resp_table.intensity, 'low'));
+            high_per = sum(strcmp(resp_table.intensity, 'high'));
+            sub_table.corr_low =  sum(strcmp(resp_table.result, 'correct') & strcmp(resp_table.intensity, 'low'))/low_per;
+            sub_table.corr_high = sum(strcmp(resp_table.result, 'correct') & strcmp(resp_table.intensity, 'high'))/high_per;
+           
+            % accuracy x expectation 
+            exp = sum(resp_table.expectation == 1);
+            unexp = sum(resp_table.expectation == 0);
+            sub_table.corr_exp = sum(resp_table.expectation == 1 & strcmp(resp_table.result, 'correct'))/exp;
+            sub_table.corr_unexp = sum(resp_table.expectation == 0 & strcmp(resp_table.result, 'correct'))/unexp;
+
+            %response_time x expectation
+            resp_table.response_time = str2double(resp_table.response_time);
+            sub_table.resp_time_exp = sum(resp_table.response_time(resp_table.expectation == 1))/exp;
+            sub_table.resp_time_unexp = sum(resp_table.response_time(resp_table.expectation == 0))/unexp;
+
+            %response time x intensity
+            sub_table.resp_time_high = sum(resp_table.response_time(strcmp(resp_table.intensity, 'high')))/high_per;
+            sub_table.resp_time_low = sum(resp_table.response_time(strcmp(resp_table.intensity, 'low')))/low_per;
+
             sub_table.p_incor_sad_high =  sum(strcmp(predict_table(strcmp(predict_table.result, 'incorrect'),:).trial_type, 'sad_high'));
             sub_table.p_incor_sad_low =  sum(strcmp(predict_table(strcmp(predict_table.result, 'incorrect'),:).trial_type, 'sad_low'));
             sub_table.p_incor_angry_high =  sum(strcmp(predict_table(strcmp(predict_table.result, 'incorrect'),:).trial_type, 'angry_high'));
             sub_table.p_incor_angry_low =  sum(strcmp(predict_table(strcmp(predict_table.result, 'incorrect'),:).trial_type, 'angry_low'));
+            
 
             if experiment_mode == "inperson"
                 % register missed trials and trial_type. Note this is 1-indexed
@@ -201,6 +236,7 @@ for k=1:length(index_array)
             sub_table.r_missed_angry_high = sum(cellfun(@(x) strcmp(x, 'angry_high'), missing_trial_type));
             sub_table.r_missed_angry_low = sum(cellfun(@(x) strcmp(x, 'angry_low'), missing_trial_type));
 
+         
            save([res_dir '/output_' model '_' 'cb' cb '_' subject], 'sub_table');
            writetable(struct2table(sub_table), [res_dir '/faces_' subject '_T' num2str(run) '_cb' cb '_' model '_' p_or_r '_fits.csv'])
            saveas(gcf, [res_dir '/faces_' subject '_T' num2str(run) '_cb' cb '_' model '_' p_or_r '_image.png']);
